@@ -1,12 +1,13 @@
 __all__ = ["wincor", "pbcor", "corb", "pball", "winall"]
 
 import numpy as np
+from scipy.stats import chi2, t, trim_mean
 from scipy.stats.mstats import winsorize
-from scipy.stats import t, chi2, trim_mean
+
 from hypothesize.utilities import pandas_to_arrays
 
-def wincor(x, y, tr=.2):
 
+def wincor(x, y, tr=0.2):
     """
     Compute the winsorized correlation between `x` and `y`.
     This function also returns the winsorized covariance.
@@ -38,27 +39,27 @@ def wincor(x, y, tr=.2):
     """
 
     if type(x) is not np.ndarray:
-        x, y=pandas_to_arrays([x, y])
+        x, y = pandas_to_arrays([x, y])
 
-    m1 = np.c_[x, y] # cbind
+    m1 = np.c_[x, y]  # cbind
     m1 = m1[~np.isnan(m1).any(axis=1)]
     nval = m1.shape[0]
     x = m1[:, 0]
     y = m1[:, 1]
     g = np.floor(tr * len(x))
-    xvec = winsorize(x, limits=(tr,tr))
-    yvec = winsorize(y, limits=(tr,tr))
-    wcor = np.corrcoef(xvec, yvec)[0,1]
-    wcov = np.cov(xvec, yvec)[0,1]
-    test = wcor * np.sqrt((len(x) - 2) / (1. - wcor ** 2))
+    xvec = winsorize(x, limits=(tr, tr))
+    yvec = winsorize(y, limits=(tr, tr))
+    wcor = np.corrcoef(xvec, yvec)[0, 1]
+    wcov = np.cov(xvec, yvec)[0, 1]
+    test = wcor * np.sqrt((len(x) - 2) / (1.0 - wcor**2))
     sig = 2 * (1 - t.cdf(abs(test), len(x) - 2 * g - 2))
 
-    res={'cor': wcor, 'wcov': wcov, 'sig': sig, 'nval': nval}
+    res = {"cor": wcor, "wcov": wcov, "sig": sig, "nval": nval}
 
     return res
 
-def pbcor(x, y, beta=.2):
 
+def pbcor(x, y, beta=0.2):
     """
     Compute the percentage bend
     correlation between `x` and `y`
@@ -99,15 +100,15 @@ def pbcor(x, y, beta=.2):
     if len(x) != len(y):
         raise Exception("The arrays do not have equal lengths")
 
-    m1 = np.c_[x, y] # cbind
+    m1 = np.c_[x, y]  # cbind
     m1 = m1[~np.isnan(m1).any(axis=1)]
     nval = m1.shape[0]
     x = m1[:, 0]
     y = m1[:, 1]
     temp = np.sort(abs(x - np.median(x)))
-    omhatx = temp[int(np.floor((1 - beta) * len(x)))-1]
+    omhatx = temp[int(np.floor((1 - beta) * len(x))) - 1]
     temp = np.sort(abs(y - np.median(y)))
-    omhaty = temp[int(np.floor((1 - beta) * len(y)))-1]
+    omhaty = temp[int(np.floor((1 - beta) * len(y))) - 1]
 
     a = (x - pbos(x, beta)) / omhatx
     b = (y - pbos(y, beta)) / omhaty
@@ -117,15 +118,15 @@ def pbcor(x, y, beta=.2):
     b = np.where(b <= -1, -1, b)
     b = np.where(b >= 1, 1, b)
 
-    pbcor_result = sum(a * b) / np.sqrt(sum(a ** 2) * sum(b ** 2))
-    test = pbcor_result * np.sqrt((len(x) - 2) / (1 - pbcor_result ** 2))
+    pbcor_result = sum(a * b) / np.sqrt(sum(a**2) * sum(b**2))
+    test = pbcor_result * np.sqrt((len(x) - 2) / (1 - pbcor_result**2))
     sig = 2 * (1 - t.cdf(abs(test), len(x) - 2))
 
-    res = {'cor': pbcor_result, 'test': test, 'p_value': sig, 'nval': nval}
+    res = {"cor": pbcor_result, "test": test, "p_value": sig, "nval": nval}
     return res
 
-def pbos(x, beta=.2):
 
+def pbos(x, beta=0.2):
     """
     Compute the one-step percentage bend measure of location
 
@@ -135,7 +136,7 @@ def pbos(x, beta=.2):
     """
 
     temp = np.sort(abs(x - np.median(x)))
-    omhatx = temp[int(np.floor((1 - beta) * len(x)))-1]
+    omhatx = temp[int(np.floor((1 - beta) * len(x))) - 1]
     psi = (x - np.median(x)) / omhatx
     i1 = len(psi[psi < -1])
     i2 = len(psi[psi > 1])
@@ -145,10 +146,10 @@ def pbos(x, beta=.2):
 
     pbos_result = (sum(sx) + omhatx * (i2 - i1)) / (len(x) - i1 - i2)
 
-    return  pbos_result
+    return pbos_result
+
 
 def corb(corfun, x, y, alpha, nboot, *args, seed=False):
-
     """
     Compute a 1-alpha confidence interval for a
     correlation using percentile bootstrap method
@@ -195,15 +196,14 @@ def corb(corfun, x, y, alpha, nboot, *args, seed=False):
 
     """
 
-    x, y=pandas_to_arrays([x, y])
+    x, y = pandas_to_arrays([x, y])
 
-
-    m1 = np.c_[x, y] # cbind
+    m1 = np.c_[x, y]  # cbind
     m1 = m1[~np.isnan(m1).any(axis=1)]
     nval = m1.shape[0]
     x = m1[:, 0]
     y = m1[:, 1]
-    est = corfun(x, y, *args)['cor']#[0]
+    est = corfun(x, y, *args)["cor"]  # [0]
 
     if seed:
         np.random.seed(seed)
@@ -211,18 +211,18 @@ def corb(corfun, x, y, alpha, nboot, *args, seed=False):
     data_inds = np.random.choice(len(x), size=(nboot, len(x)))
     bvec = np.array([corbsub(row_inds, x, y, corfun, *args) for row_inds in data_inds])
 
-    ihi = int(np.floor((1 - alpha / 2) * nboot + .5))
-    ilow = int(np.floor((alpha / 2) * nboot + .5))
+    ihi = int(np.floor((1 - alpha / 2) * nboot + 0.5))
+    ilow = int(np.floor((alpha / 2) * nboot + 0.5))
     bsort = sorted(bvec)
     corci = [bsort[ilow], bsort[ihi]]
     phat = sum(bvec < 0) / nboot
-    sig =  2 * min(phat, 1 - phat)
+    sig = 2 * min(phat, 1 - phat)
 
-    #return corci, sig, est
-    return {'ci': corci, 'p_value': sig, 'cor': est}
+    # return corci, sig, est
+    return {"ci": corci, "p_value": sig, "cor": est}
+
 
 def corbsub(isub, x, y, corfun, *args):
-
     """
     Compute correlation for x[isub] and y[isub]
     isub is a vector of length n,
@@ -235,12 +235,12 @@ def corbsub(isub, x, y, corfun, *args):
     corfun is some correlation function
     """
 
-    corbsub_results = corfun(x[isub], y[isub], *args)['cor']#[0]
+    corbsub_results = corfun(x[isub], y[isub], *args)["cor"]  # [0]
 
     return corbsub_results
 
-def pball(x, beta=.2):
 
+def pball(x, beta=0.2):
     """
     Compute the percentage bend correlation matrix
     for all pairs of columns in `x`. This function also
@@ -276,43 +276,44 @@ def pball(x, beta=.2):
 
     """
 
-    m=x.values
-    ncol=m.shape[1]
+    m = x.values
+    ncol = m.shape[1]
 
-    pbcorm=np.zeros([ncol, ncol])
-    temp=np.ones([ncol, ncol])
-    siglevel=np.full([ncol, ncol], np.nan)
-    #cmat = np.zeros([ncol, ncol])
+    pbcorm = np.zeros([ncol, ncol])
+    temp = np.ones([ncol, ncol])
+    siglevel = np.full([ncol, ncol], np.nan)
+    # cmat = np.zeros([ncol, ncol])
 
     for i in range(ncol):
-        for j in range(i,ncol):
+        for j in range(i, ncol):
             if i < j:
                 pbc = pbcor(m[:, i], m[:, j], beta)
-                pbcorm[i, j] = pbc['cor']
+                pbcorm[i, j] = pbc["cor"]
                 temp[i, j] = pbcorm[i, j]
                 temp[j, i] = pbcorm[i, j]
-                siglevel[i, j] = pbc['p_value']
+                siglevel[i, j] = pbc["p_value"]
                 siglevel[j, i] = siglevel[i, j]
 
-
-    tstat = pbcorm * np.sqrt((m.shape[0] - 2) / (1 - pbcorm ** 2))
-    cmat = np.sqrt((m.shape[0] - 2.5) * np.log(1 + tstat ** 2 / (m.shape[0] - 2)))
+    tstat = pbcorm * np.sqrt((m.shape[0] - 2) / (1 - pbcorm**2))
+    cmat = np.sqrt((m.shape[0] - 2.5) * np.log(1 + tstat**2 / (m.shape[0] - 2)))
     bv = 48 * (m.shape[0] - 2.5) ** 2
-    cmat = \
-    cmat + (cmat ** 3 + 3 * cmat) / bv - (4 * cmat ** 7 + 33 * cmat ** 5 + 240 ** cmat ** 3 + 855 * cmat) / \
-        (10 * bv ** 2 + 8 * bv * cmat ** 4 + 1000 * bv)
+    cmat = (
+        cmat
+        + (cmat**3 + 3 * cmat) / bv
+        - (4 * cmat**7 + 33 * cmat**5 + 240**cmat**3 + 855 * cmat)
+        / (10 * bv**2 + 8 * bv * cmat**4 + 1000 * bv)
+    )
 
-    H = np.sum(cmat ** 2)
+    H = np.sum(cmat**2)
     df = ncol * (ncol - 1) / 2
     h_siglevel = 1 - chi2.cdf(H, df)
 
-    results={"pbcorm": temp, "p_value": siglevel,
-             "H":H, "H_p_value": h_siglevel}
+    results = {"pbcorm": temp, "p_value": siglevel, "H": H, "H_p_value": h_siglevel}
 
     return results
 
-def winall(x, tr=.2):
 
+def winall(x, tr=0.2):
     """
     Compute the Winsorized correlation and covariance matrix
     for all pairs of columns in `x`. This function also
@@ -353,23 +354,23 @@ def winall(x, tr=.2):
     siglevel = np.full([ncol, ncol], np.nan)
 
     for i in range(ncol):
-        #ip = i
-        for j in range(i,ncol):
+        # ip = i
+        for j in range(i, ncol):
             val = wincor(m[:, i], m[:, j], tr)
-            wcor[i, j] = val['cor']
+            wcor[i, j] = val["cor"]
             wcor[j, i] = wcor[i, j]
 
             if i == j:
                 wcor[i, j] = 1
 
-            wcov[i, j] = val['cor']
+            wcov[i, j] = val["cor"]
             wcov[j, i] = wcov[i, j]
 
             if i != j:
-                siglevel[i, j] = val['sig']
+                siglevel[i, j] = val["sig"]
                 siglevel[j, i] = siglevel[i, j]
 
-    m=m[~np.isnan(m).any(axis=1)]
-    cent=trim_mean(m, tr)
+    m = m[~np.isnan(m).any(axis=1)]
+    cent = trim_mean(m, tr)
 
     return {"wcor": wcor, "wcov": wcov, "center": cent, "p_value": siglevel}

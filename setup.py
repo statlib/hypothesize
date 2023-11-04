@@ -1,31 +1,35 @@
-from setuptools import find_packages, setup
 import io
 import os
+
+from setuptools import find_packages, setup
+
 
 def get_install_requirements(path):
     content = read(path)
     return [req for req in content.split("\n") if req != "" and not req.startswith("#")]
+
 
 def read(path, encoding="utf-8"):
     path = os.path.join(os.path.dirname(__file__), path)
     with io.open(path, encoding=encoding) as fp:
         return fp.read()
 
+
 setup(
-    name='hypothesize',
-    version='1.2.2',
-    description='A Python package for comparing groups and measuring associations using robust statistics.',
-    author='Allan Campopiano',
+    name="hypothesize",
+    version="1.2.2",
+    description="A Python package for comparing groups and measuring associations using robust statistics.",
+    author="Allan Campopiano",
     author_email="campopianoa@hcdsb.org",
-    license='BSD 3-clause',
-    long_description=read('README.md'),
-    long_description_content_type='text/markdown',
+    license="BSD 3-clause",
+    long_description=read("README.md"),
+    long_description_content_type="text/markdown",
     url="https://github.com/Alcampopiano/hypothesize",
     packages=find_packages(),
     include_package_data=True,
     install_requires=get_install_requirements("requirements.txt"),
     python_requires=">=3.6",
-    tests_require=['pytest'],
+    tests_require=["pytest"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
@@ -37,5 +41,4 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.10",
     ],
-
 )

@@ -93,3 +93,10 @@ docs/site/
 
 # R history file
 *.Rhistory
+
+# venv
+.venv/
+venv.sh
+
+# Make
+Makefile
